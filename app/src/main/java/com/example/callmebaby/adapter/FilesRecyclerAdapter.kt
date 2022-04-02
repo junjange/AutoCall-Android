@@ -1,7 +1,6 @@
-package com.example.callmebaby.fileList
+package com.example.callmebaby.adapter
 
 import android.annotation.SuppressLint
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +10,7 @@ import com.example.callmebaby.common.FileModel
 import com.example.callmebaby.common.FileType
 import kotlinx.android.synthetic.main.item_recycler_file.view.*
 
+// RectclerView.adapter을 사용해서 파일 및 폴더 정보를 접근할 수 있다.
 class FilesRecyclerAdapter : RecyclerView.Adapter<FilesRecyclerAdapter.ViewHolder>() {
     var onItemClickListener: ((FileModel) -> Unit)? = null
     var onItemLongClickListener: ((FileModel) -> Unit)? = null
@@ -46,17 +46,15 @@ class FilesRecyclerAdapter : RecyclerView.Adapter<FilesRecyclerAdapter.ViewHolde
             val fileModel = filesList[position]
 
             itemView.nameTextView.text = fileModel.name
-
-                    if (fileModel.fileType == FileType.FOLDER) {
-
-                        itemView.folderTextView.visibility = View.VISIBLE
-                        itemView.totalSizeTextView.visibility = View.GONE
-                        itemView.folderTextView.text = "(${fileModel.subFiles} files)" }
-                    else {
-                        itemView.folderTextView.visibility = View.GONE
-                        itemView.totalSizeTextView.visibility = View.VISIBLE
-                        itemView.totalSizeTextView.text = "${String.format("%.2f", fileModel.sizeInMB)} mb"
-                    }
+            if (fileModel.fileType == FileType.FOLDER) {
+                itemView.folderTextView.visibility = View.VISIBLE
+                itemView.totalSizeTextView.visibility = View.GONE
+                itemView.folderTextView.text = "(${fileModel.subFiles} files)"
+            } else {
+                itemView.folderTextView.visibility = View.GONE
+                itemView.totalSizeTextView.visibility = View.VISIBLE
+                itemView.totalSizeTextView.text = "${String.format("%.2f", fileModel.sizeInMB)} mb"
+            }
         }
     }
 }

@@ -47,10 +47,40 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
-    implementation 'gun0912.ted:tedpermission:2.2.3' // 권한
+    // tedpermission
+    implementation 'gun0912.ted:tedpermission:2.2.3'
 
+    // recyclerview
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
+
+
+    // Room components
+    def roomVersion = '2.2.5'
+    implementation "androidx.room:room-runtime:$roomVersion"
+    kapt "androidx.room:room-compiler:$roomVersion"
+    implementation "androidx.room:room-ktx:$roomVersion"
+    androidTestImplementation "androidx.room:room-testing:$roomVersion"
+
+    // Kotlin components
+    def coroutines = '1.3.4'
+    def kotlin_version = "1.3.72"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    api "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines"
+    api "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines"
+
+
+    // Lifecycle components
+    def archLifecycleVersion = '2.2.0'
+    implementation "androidx.lifecycle:lifecycle-extensions:$archLifecycleVersion"
+    kapt "androidx.lifecycle:lifecycle-compiler:$archLifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$archLifecycleVersion"
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.4.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.4.1'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.4.1'
+    implementation 'androidx.room:room-runtime:2.4.2'
+
 
 
 }

@@ -6,17 +6,17 @@
     <data>
         <variable
             name="mainActivity"
-            type="com.example.callmebaby.MainActivity" />
+            type="com.example.callmebaby.ui.MainActivity" />
     </data>
 <LinearLayout
     android:orientation="vertical"
     android:gravity="center_horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".ui.MainActivity">
 
     <Button
-        android:id="@+id/button2"
+        android:id="@+id/FileImportButton"
         android:onClick="@{mainActivity::onClickFileImportButton}"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -27,11 +27,22 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/CallButton"
         android:onClick="@{mainActivity::onClickCallButton}"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/call"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/AllDeleteButton"
+        android:onClick="@{mainActivity::onClickAllDeleteButton}"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/AllDelete"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -44,6 +55,19 @@
         android:text="">
 
     </TextView>
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="18dp"
+        android:padding="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/btnAdd"
+        app:layout_constraintStart_toEndOf="@+id/btnAdd"
+        app:layout_constraintTop_toBottomOf="@+id/add_button"
+        tools:listitem="@layout/item_recycler_call" />
 
 
 

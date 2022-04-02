@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.callmebaby.R
+import com.example.callmebaby.adapter.FilesRecyclerAdapter
 import com.example.callmebaby.common.FileModel
 import com.example.callmebaby.utils.getFileModelsFromFiles
 import com.example.callmebaby.utils.getFilesFromPath
@@ -21,20 +22,18 @@ class FilesListFragment : Fragment() {
     private lateinit var PATH: String
     private lateinit var eCallback: OnItemClickListener
 
+    // OnItemClickListener 이벤트 변수를 선언
     interface OnItemClickListener{
         fun onClick(fileModel : FileModel)
         fun onLongClick(fileModel : FileModel)
     }
-
-
-
 
     companion object {
         private const val ARG_PATH: String = "com.example.callmebaby"
         fun build(block: Builder.() -> Unit) = Builder().apply(block).build()
 
     }
-
+    // 모든 변수에 연결할 수 있는 Builder 클래스는 입력받은 FilesListFragment 정보를 연결
     class Builder{
         var path : String = ""
         fun build(): FilesListFragment {
@@ -46,6 +45,7 @@ class FilesListFragment : Fragment() {
         }
     }
 
+    // OnItemClickListener로 캐스팅하여 eCallback에 연결
     override fun onAttach(context: Context) {
         super.onAttach(context)
         try{ eCallback = context as OnItemClickListener }
@@ -69,8 +69,6 @@ class FilesListFragment : Fragment() {
             return
         }
         PATH = filePath
-        Log.d("ttt", PATH)
-        Log.d("ttt", filePath)
 
         initViews()
     }
@@ -80,15 +78,19 @@ class FilesListFragment : Fragment() {
         mFilesAdapter = FilesRecyclerAdapter()
         filesRecyclerView.adapter = mFilesAdapter
 
+        // onItemClickListener, onItemLongClickListener 함수에 eCallback 이벤트를 연동하면
+        // 리스트 클릭 시점에 eCallback가 호출되면서 이벤트가 연동된다.
         mFilesAdapter.onItemClickListener = {
             eCallback.onClick(it)
         }
-        mFilesAdapter.onItemLongClickListener = { eCallback.onLongClick(it) }
+        mFilesAdapter.onItemLongClickListener = {
+            eCallback.onLongClick(it)
+        }
 
-        upDateDate()
+        upDate()
     }
 
-    fun upDateDate() {
+    private fun upDate() {
         val files = getFileModelsFromFiles(getFilesFromPath(PATH))
 
         if (files.isEmpty()) {

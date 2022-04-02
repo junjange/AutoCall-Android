@@ -1,42 +1,60 @@
-package com.example.callmebaby
+package com.example.callmebaby.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Paint
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.telecom.Call
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil.setContentView
+import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.callmebaby.R
+import com.example.callmebaby.adapter.CallRecyclerAdapter
+import com.example.callmebaby.data.CallEntity
 import com.example.callmebaby.service.MyService
 import com.example.callmebaby.databinding.ActivityMainBinding
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.TedPermission
+import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {
 
     var isService = false
     var currPhoneNumIdx = 0 // 통화중인 전화 인덱스
-    val autoCallNumList = listOf("01033032391","010215") // 전화 리스트
+    var autoCallNumListSize = 0
+    var autoCallFalseNumListSize = 0
+    var autoCallTotalNumListSize = 0
+    var phoneBook  = listOf<CallEntity>()
+
     private lateinit var binding: ActivityMainBinding
+    private val viewModel: CallViewModel by viewModels()
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = setContentView(this, R.layout.activity_main)
         binding.mainActivity = this
 
-        binding.callCheck.text = "전체 ${autoCallNumList.size}개 중 ${currPhoneNumIdx}번 째 통화 완료"
 
         // Get permission
         val permissionList = arrayOf<String>(
@@ -46,12 +64,94 @@ class MainActivity : AppCompatActivity() {
 
         )
 
+
         // 권한 요청
         ActivityCompat.requestPermissions(this@MainActivity, permissionList, 1)
+
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
             getPermission()
         }
+
+        // DB에 저장된 번호를 recyclerview를 통해 UI에 뿌려준다.
+        val mAdapter = CallRecyclerAdapter(this, viewModel)
+
+        recyclerview.apply {
+            adapter = mAdapter
+            layoutManager = LinearLayoutManager(applicationContext)
+
+        }
+
+        viewModel.allPhoneNumber.observe(this@MainActivity, Observer { call ->
+            // Update the cached copy of the users in the adapter.
+            call?.let { mAdapter.setUsers(it) }
+        })
+
+//
+//        viewModel.getAll().observe(this, Observer { num ->
+//
+//
+//            CoroutineScope(Dispatchers.Main).launch {
+//                phoneBook = num
+//                autoCallTotalNumListSize = num.size
+//
+//            }
+//
+//        })
+//
+//        viewModel.getFalseAll().observe(this,{ falseNum ->
+//
+//
+//            CoroutineScope(Dispatchers.Main).launch {
+//                autoCallFalseNumListSize = falseNum.size
+//                autoCallNumListSize = autoCallTotalNumListSize - autoCallFalseNumListSize
+//
+//                binding.callCheck.text = "전체 ${autoCallTotalNumListSize}개 중 ${autoCallNumListSize}번 째 통화 완료"
+//            }
+//
+//
+//        })
+
+        Log.d("Ttt2", autoCallFalseNumListSize.toString())
+
+        CoroutineScope(Dispatchers.Main).launch {
+
+            viewModel.getAll().observe(this@MainActivity, Observer { num ->
+
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    phoneBook = num
+                    autoCallTotalNumListSize = num.size
+
+                }
+
+            })
+
+            viewModel.getFalseAll().observe(this@MainActivity,{ falseNum ->
+
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    autoCallFalseNumListSize = falseNum.size
+                    autoCallNumListSize = autoCallTotalNumListSize - autoCallFalseNumListSize
+
+                }
+
+
+            })
+
+        }
+
+        CoroutineScope(Dispatchers.Main).launch {
+            binding.callCheck.text = "전체 ${autoCallTotalNumListSize}개 중 ${autoCallNumListSize}번 째 통화 완료"
+
+
+        }
+
+
+
+
+
 
 
 
@@ -95,22 +195,32 @@ class MainActivity : AppCompatActivity() {
     private val phoneListener = object : PhoneStateListener() {
         @SuppressLint("SetTextI18n")
         override fun onCallStateChanged(state: Int, incomingNumber: String) {
-            Log.d("ttt","왔어?${state}")
-            Log.d("ttt", TelephonyManager.CALL_STATE_OFFHOOK.toString())
 
-            binding.callCheck.text = "전체 ${autoCallNumList.size}개 중 ${currPhoneNumIdx}번 째 통화 완료"
+            binding.callCheck.text = "전체 ${autoCallTotalNumListSize}개 중 ${autoCallNumListSize + currPhoneNumIdx}번 째 통화 완료"
+
+            Log.d("ttt1", autoCallFalseNumListSize.toString())
+
+
 
             when (state) {
                 TelephonyManager.CALL_STATE_IDLE -> {
-                    Log.d("ttt", "통화종료 혹은 통화벨 종료")
-                    Log.d("tttddd", isServiceRunningCheck().toString())
 
                     if(isServiceRunningCheck()){
-                        // 전화할 번호가 있으면 통화
-                        if(currPhoneNumIdx < autoCallNumList.size){
-                            callMe(autoCallNumList[currPhoneNumIdx])
-                            isService = true
 
+                            // 전화할 번호가 있으면 통화
+                        if(autoCallNumListSize + currPhoneNumIdx < autoCallTotalNumListSize){
+                            Log.d("ttt", phoneBook.toString())
+
+                            phoneBook[currPhoneNumIdx].phoneNumberState = true
+                            viewModel.update(phoneBook[currPhoneNumIdx])
+                            callMe(phoneBook[currPhoneNumIdx].phoneNumber)
+
+                            recyclerview.apply {
+                                layoutManager = LinearLayoutManager(applicationContext)
+
+                            }
+
+                            isService = true
 
                         }
                         else {
@@ -122,7 +232,7 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
 
-                        currPhoneNumIdx++
+
                     }
 
 
@@ -146,7 +256,7 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.M)
     fun onClickCallButton(view: View){
 
-        if (currPhoneNumIdx < autoCallNumList.size){
+        if (autoCallNumListSize + currPhoneNumIdx < autoCallTotalNumListSize){
             val mTelephonyManager = this.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
 
             // 전화 연결
@@ -182,13 +292,29 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    fun onClickAllDeleteButton(view: View){
+        lifecycleScope.launch(Dispatchers.IO) {
+            viewModel.deleteAll()
+        }
+
+    }
+
     // 전화 연결
     private fun callMe(num : String){
-        Log.d("ttt", "hi")
 
-        val myUri = Uri.parse("tel:${num}")
-        val intent = Intent(Intent.ACTION_CALL, myUri)
-        startActivity(intent)
+        if(isServiceRunningCheck()){
+            Log.d("ttt", currPhoneNumIdx.toString())
+            val myUri = Uri.parse("tel:${num}")
+            val intent = Intent(Intent.ACTION_CALL, myUri)
+            startActivity(intent)
+            currPhoneNumIdx++
+
+
+
+        }
+
+
+
 
     }
 
@@ -206,7 +332,6 @@ class MainActivity : AppCompatActivity() {
     fun isServiceRunningCheck(): Boolean {
         val manager = this.getSystemService(ACTIVITY_SERVICE) as ActivityManager
         for (service in manager.getRunningServices(Int.MAX_VALUE)) {
-            Log.d("Tttdd", service.service.className.toString())
             if ("com.example.callmebaby.service.MyService" == service.service.className) {
                 return true
             }

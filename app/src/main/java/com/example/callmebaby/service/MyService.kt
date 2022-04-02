@@ -3,12 +3,8 @@ package com.example.callmebaby.service
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-
-
 import android.graphics.PixelFormat
-
 import android.os.Build
-import android.util.Log
 import android.view.*
 import android.view.WindowManager.*
 import com.example.callmebaby.R
@@ -75,13 +71,9 @@ class MyService : Service() {
     }
 
 
-
     // 앱이 종료될때 실행
     override fun onDestroy() {
         super.onDestroy()
-        Log.d("ttttt", floatingView.toString())
-        Log.d("ttttt", expandedView.toString())
-
         if (floatingView != null) {
             windowManager!!.removeView(floatingView)
         }
