@@ -5,12 +5,11 @@ import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Paint
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.provider.Settings
-import android.telecom.Call
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
 import android.util.Log
@@ -34,21 +33,23 @@ import com.gun0912.tedpermission.TedPermission
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import android.os.Looper
+
+
+
 
 
 class MainActivity : AppCompatActivity() {
 
     var isService = false
-    var currPhoneNumIdx = 0 // 통화중인 전화 인덱스
-    var autoCallNumListSize = 0
-    var autoCallFalseNumListSize = 0
-    var autoCallTotalNumListSize = 0
-    var phoneBook  = listOf<CallEntity>()
+    var autoCallTotalNumListSize = 0 // 총 전화번호 개수
+    var autoCallTureNumListSize = 0 // 전화한 전화번호 개수, 통화중인 전화 인덱스
+    var phoneBook = listOf<CallEntity>() // 전화번호부
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: CallViewModel by viewModels()
+    @RequiresApi(Build.VERSION_CODES.R)
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +62,8 @@ class MainActivity : AppCompatActivity() {
             Manifest.permission.CALL_PHONE,
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.MANAGE_EXTERNAL_STORAGE
 
         )
 
@@ -88,73 +91,24 @@ class MainActivity : AppCompatActivity() {
             call?.let { mAdapter.setUsers(it) }
         })
 
-//
-//        viewModel.getAll().observe(this, Observer { num ->
-//
-//
-//            CoroutineScope(Dispatchers.Main).launch {
-//                phoneBook = num
-//                autoCallTotalNumListSize = num.size
-//
-//            }
-//
-//        })
-//
-//        viewModel.getFalseAll().observe(this,{ falseNum ->
-//
-//
-//            CoroutineScope(Dispatchers.Main).launch {
-//                autoCallFalseNumListSize = falseNum.size
-//                autoCallNumListSize = autoCallTotalNumListSize - autoCallFalseNumListSize
-//
-//                binding.callCheck.text = "전체 ${autoCallTotalNumListSize}개 중 ${autoCallNumListSize}번 째 통화 완료"
-//            }
-//
-//
-//        })
-
-        Log.d("Ttt2", autoCallFalseNumListSize.toString())
-
-        CoroutineScope(Dispatchers.Main).launch {
-
+        CoroutineScope(Dispatchers.Main).launch  {
             viewModel.getAll().observe(this@MainActivity, Observer { num ->
 
-
-                CoroutineScope(Dispatchers.IO).launch {
-                    phoneBook = num
-                    autoCallTotalNumListSize = num.size
-
-                }
+                phoneBook = num
+                autoCallTotalNumListSize = num.size
+                binding.callCheck.text =
+                    "전체 ${autoCallTotalNumListSize}개 중 ${autoCallTureNumListSize}번 째 통화 완료"
 
             })
 
-            viewModel.getFalseAll().observe(this@MainActivity,{ falseNum ->
+            viewModel.getTureAll().observe(this@MainActivity,{ falseNum ->
 
-
-                CoroutineScope(Dispatchers.IO).launch {
-                    autoCallFalseNumListSize = falseNum.size
-                    autoCallNumListSize = autoCallTotalNumListSize - autoCallFalseNumListSize
-
-                }
-
+                autoCallTureNumListSize = falseNum.size
+                binding.callCheck.text =
+                    "전체 ${autoCallTotalNumListSize}개 중 ${autoCallTureNumListSize}번 째 통화 완료"
 
             })
-
         }
-
-        CoroutineScope(Dispatchers.Main).launch {
-            binding.callCheck.text = "전체 ${autoCallTotalNumListSize}개 중 ${autoCallNumListSize}번 째 통화 완료"
-
-
-        }
-
-
-
-
-
-
-
-
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -178,16 +132,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            TedPermission.with(this)
-                .setPermissionListener(permissionListener)
-                .setDeniedMessage("[권한] 에서 저장공간 액세스 권한을 모든 파일 관리를 승인해야 파일 불러오기가 가능합니다.")
-                .setPermissions(Manifest.permission.READ_EXTERNAL_STORAGE)
-                .check()
-        }
-
-
+        TedPermission.with(this)
+            .setPermissionListener(permissionListener)
+            .setDeniedMessage("[권한] 에서 저장공간 액세스 권한을 모든 파일 관리를 승인해야 파일 불러오기가 가능합니다.")
+            .setPermissions(Manifest.permission.READ_EXTERNAL_STORAGE)
+            .check()
     }
 
 
@@ -196,10 +145,7 @@ class MainActivity : AppCompatActivity() {
         @SuppressLint("SetTextI18n")
         override fun onCallStateChanged(state: Int, incomingNumber: String) {
 
-            binding.callCheck.text = "전체 ${autoCallTotalNumListSize}개 중 ${autoCallNumListSize + currPhoneNumIdx}번 째 통화 완료"
-
-            Log.d("ttt1", autoCallFalseNumListSize.toString())
-
+            binding.callCheck.text = "전체 ${autoCallTotalNumListSize}개 중 ${autoCallTureNumListSize}번 째 통화 완료"
 
 
             when (state) {
@@ -207,13 +153,12 @@ class MainActivity : AppCompatActivity() {
 
                     if(isServiceRunningCheck()){
 
-                            // 전화할 번호가 있으면 통화
-                        if(autoCallNumListSize + currPhoneNumIdx < autoCallTotalNumListSize){
-                            Log.d("ttt", phoneBook.toString())
+                        // 전화할 번호가 있으면 통화
+                        if(autoCallTureNumListSize < autoCallTotalNumListSize){
 
-                            phoneBook[currPhoneNumIdx].phoneNumberState = true
-                            viewModel.update(phoneBook[currPhoneNumIdx])
-                            callMe(phoneBook[currPhoneNumIdx].phoneNumber)
+                            phoneBook[autoCallTureNumListSize].phoneNumberState = true
+                            viewModel.update(phoneBook[autoCallTureNumListSize])
+                            callMe(phoneBook[autoCallTureNumListSize].phoneNumber)
 
                             recyclerview.apply {
                                 layoutManager = LinearLayoutManager(applicationContext)
@@ -232,9 +177,7 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
 
-
                     }
-
 
                 }
                 TelephonyManager.CALL_STATE_OFFHOOK -> {
@@ -245,7 +188,6 @@ class MainActivity : AppCompatActivity() {
                     Log.d("ttt", "통화중")
                 }
             }
-            Log.d("Dddd",isService.toString())
 
             Log.d("ttt", "phone state : $state");
             Log.d("ttt", "phone currentPhoneNumber : $incomingNumber")
@@ -256,7 +198,7 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.M)
     fun onClickCallButton(view: View){
 
-        if (autoCallNumListSize + currPhoneNumIdx < autoCallTotalNumListSize){
+        if (autoCallTureNumListSize < autoCallTotalNumListSize){
             val mTelephonyManager = this.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
 
             // 전화 연결
@@ -303,18 +245,11 @@ class MainActivity : AppCompatActivity() {
     private fun callMe(num : String){
 
         if(isServiceRunningCheck()){
-            Log.d("ttt", currPhoneNumIdx.toString())
             val myUri = Uri.parse("tel:${num}")
             val intent = Intent(Intent.ACTION_CALL, myUri)
             startActivity(intent)
-            currPhoneNumIdx++
-
-
 
         }
-
-
-
 
     }
 
@@ -337,6 +272,29 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return false
+    }
+
+    // 뒤로가기 2번 눌러야 종료
+    private val FINISH_INTERVAL_TIME: Long = 2500
+    private var backPressedTime: Long = 0
+    private var toast: Toast? = null
+    override fun onBackPressed() {
+        val tempTime = System.currentTimeMillis()
+        val intervalTime = tempTime - backPressedTime
+
+
+        // 뒤로 가기 할 경우 홈 화면으로 이동
+        if (intervalTime in 0..FINISH_INTERVAL_TIME) {
+            super.onBackPressed()
+            // 앱 종료시 뒤로가기 토스트 종료
+            toast!!.cancel()
+            finish()
+        } else {
+            backPressedTime = tempTime
+            toast =
+                Toast.makeText(applicationContext, "'뒤로'버튼을 한번 더 누르면 종료됩니다.", Toast.LENGTH_SHORT)
+            toast!!.show()
+        }
     }
 
 }

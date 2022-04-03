@@ -9,8 +9,9 @@ interface CallDao {
     @Query("SELECT * from call")
     fun getAll(): LiveData<List<CallEntity>>
 
-    @Query("SELECT * from call where phoneNumberState =:phoneNumberState")
-    fun getFalseAll(phoneNumberState : Boolean = false): LiveData<List<CallEntity>>
+    // phoneNumberState가 true인 데이터 베이스 불러오기기
+   @Query("SELECT * from call where phoneNumberState =:phoneNumberState")
+    fun getTureAll(phoneNumberState : Boolean = true): LiveData<List<CallEntity>>
 
     // 데이터 추가
     @Insert(onConflict = OnConflictStrategy.IGNORE)

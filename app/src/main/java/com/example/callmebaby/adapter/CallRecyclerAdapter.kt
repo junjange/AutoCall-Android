@@ -1,6 +1,7 @@
 package com.example.callmebaby.adapter
 
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.graphics.Paint
 import android.util.Log
 import android.view.LayoutInflater
@@ -40,11 +41,11 @@ class CallRecyclerAdapter internal constructor(context: MainActivity, var onDele
 
         holder.num.text = callNumber.phoneNumber
 
-        Log.d("asd", call[position].phoneNumberState.toString())
         if (call[position].phoneNumberState){
 
 
             holder.num.paintFlags = holder.num.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+            holder.num.setTextColor(Color.GRAY)
         }
 
         holder.deleteButton.setOnClickListener(View.OnClickListener {

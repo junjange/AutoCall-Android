@@ -8,7 +8,7 @@ class CallRepository(callDatabase: CallDatabase) {
 
     private val callDao = callDatabase.callDao()
     val allPhoneNumber: LiveData<List<CallEntity>> = callDao.getAll()
-    val allFalsePhoneNumber: LiveData<List<CallEntity>> = callDao.getFalseAll()
+    val allTurePhoneNumber: LiveData<List<CallEntity>> = callDao.getTureAll()
     companion object {
         private var sInstance: CallRepository? = null
         fun getInstance(database: CallDatabase): CallRepository {

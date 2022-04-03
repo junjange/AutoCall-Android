@@ -1,7 +1,6 @@
 package com.example.callmebaby.ui
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
@@ -16,7 +15,7 @@ class CallViewModel(application: Application) : AndroidViewModel(application){
         CallRepository(CallDatabase.getDatabase(application, viewModelScope))
 
     var allPhoneNumber: LiveData<List<CallEntity>> = callRepository.allPhoneNumber
-    var allFalsePhoneNumber : LiveData<List<CallEntity>>  = callRepository.allFalsePhoneNumber
+    var allTurePhoneNumber : LiveData<List<CallEntity>>  = callRepository.allTurePhoneNumber
 
 
     fun insert(callEntity: CallEntity) = viewModelScope.launch(Dispatchers.IO) {
@@ -29,7 +28,6 @@ class CallViewModel(application: Application) : AndroidViewModel(application){
 
     fun update(callEntity: CallEntity) = viewModelScope.launch(Dispatchers.IO) {
         callRepository.update(callEntity)
-        Log.d("ttt", "gdgd")
     }
 
 
@@ -41,8 +39,8 @@ class CallViewModel(application: Application) : AndroidViewModel(application){
         return allPhoneNumber
     }
 
-    fun getFalseAll(): LiveData<List<CallEntity>>{
-        return allFalsePhoneNumber
+    fun getTureAll(): LiveData<List<CallEntity>>{
+        return allTurePhoneNumber
     }
 
 }
