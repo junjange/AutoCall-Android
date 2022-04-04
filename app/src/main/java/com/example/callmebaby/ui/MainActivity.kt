@@ -6,9 +6,6 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.Handler
 import android.provider.Settings
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
@@ -17,14 +14,18 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil.setContentView
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.callmebaby.R
 import com.example.callmebaby.adapter.CallRecyclerAdapter
+import com.example.callmebaby.common.SwipeHelperCallback
 import com.example.callmebaby.data.CallEntity
 import com.example.callmebaby.service.MyService
 import com.example.callmebaby.databinding.ActivityMainBinding
@@ -34,7 +35,12 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import android.os.Looper
+import kotlinx.android.synthetic.main.fragment_file_list.*
+import android.R.string.no
+import android.os.*
+import android.os.Environment
+
+import android.R.string.no
 
 
 
@@ -50,7 +56,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: CallViewModel by viewModels()
     @RequiresApi(Build.VERSION_CODES.R)
-    @SuppressLint("SetTextI18n")
+    @SuppressLint("SetTextI18n", "ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = setContentView(this, R.layout.activity_main)
@@ -71,11 +77,9 @@ class MainActivity : AppCompatActivity() {
         // 권한 요청
         ActivityCompat.requestPermissions(this@MainActivity, permissionList, 1)
 
+        getStoragePermission()
+        getPermission()
 
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
-            getPermission()
-        }
 
         // DB에 저장된 번호를 recyclerview를 통해 UI에 뿌려준다.
         val mAdapter = CallRecyclerAdapter(this, viewModel)
@@ -84,6 +88,23 @@ class MainActivity : AppCompatActivity() {
             adapter = mAdapter
             layoutManager = LinearLayoutManager(applicationContext)
 
+        }
+
+        // 리사이클러뷰에 스와이프, 드래그 기능 달기
+        val swipeHelperCallback = SwipeHelperCallback(mAdapter).apply {
+            // 스와이프한 뒤 고정시킬 위치 지정
+            setClamp(resources.displayMetrics.widthPixels.toFloat() / 4)    // 1080 / 4 = 270
+        }
+
+        ItemTouchHelper(swipeHelperCallback).attachToRecyclerView(binding.recyclerview)
+
+        // 구분선 추가
+        binding.recyclerview.addItemDecoration(DividerItemDecoration(applicationContext, DividerItemDecoration.VERTICAL))
+
+        // 다른 곳 터치 시 기존 선택했던 뷰 닫기
+        binding.recyclerview.setOnTouchListener { _, _ ->
+            swipeHelperCallback.removePreviousClamp(binding.recyclerview)
+            false
         }
 
         viewModel.allPhoneNumber.observe(this@MainActivity, Observer { call ->
@@ -99,33 +120,58 @@ class MainActivity : AppCompatActivity() {
                 binding.callCheck.text =
                     "전체 ${autoCallTotalNumListSize}개 중 ${autoCallTureNumListSize}번 째 통화 완료"
 
+
             })
 
             viewModel.getTureAll().observe(this@MainActivity,{ falseNum ->
+
 
                 autoCallTureNumListSize = falseNum.size
                 binding.callCheck.text =
                     "전체 ${autoCallTotalNumListSize}개 중 ${autoCallTureNumListSize}번 째 통화 완료"
 
+                if (autoCallTureNumListSize >= 1){
+                    binding.CallButton.text = "다음 통화"
+
+                }else if(autoCallTureNumListSize == 0){
+                    binding.CallButton.text = "통화 걸기"
+
+                }
+
             })
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     fun onClickFileImportButton(view: View){
 
         val permissionListener = object : PermissionListener {
+            @RequiresApi(Build.VERSION_CODES.R)
             override fun onPermissionGranted() {
 
-                if (!Settings.canDrawOverlays(this@MainActivity)) {
-                    getPermission()
-                } else {
-                    // 권한이 설정돼있으면 MyService 실행
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ){
+
+                    if (Environment.isExternalStorageManager()) {
+                        // 권한이 설정돼있으면 FileImportActivity 이동
+                        val intent = Intent(this@MainActivity, FileImportActivity::class.java)
+                        startActivity(intent)
+                    }else{
+                        val intent = Intent()
+                        intent.action = Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
+                        val uri = Uri.fromParts("package", packageName, null)
+                        intent.data = uri
+                        startActivity(intent)
+                    }
+
+                }else{
+                    // 권한이 설정돼있으면 FileImportActivity 이동
                     val intent = Intent(this@MainActivity, FileImportActivity::class.java)
                     startActivity(intent)
 
 
                 }
+
+
+
             }
             override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
                 Toast.makeText(this@MainActivity,"저장공간 액세스 권한이 거부되었습니다.", Toast.LENGTH_SHORT).show()
@@ -137,6 +183,11 @@ class MainActivity : AppCompatActivity() {
             .setDeniedMessage("[권한] 에서 저장공간 액세스 권한을 모든 파일 관리를 승인해야 파일 불러오기가 가능합니다.")
             .setPermissions(Manifest.permission.READ_EXTERNAL_STORAGE)
             .check()
+
+
+
+
+
     }
 
 
@@ -180,22 +231,18 @@ class MainActivity : AppCompatActivity() {
                     }
 
                 }
+                // 통화벨 울리는중
                 TelephonyManager.CALL_STATE_OFFHOOK -> {
-                    Log.d("ttt", "통화벨 울리는중")
 
                 }
+                // 통화중
                 TelephonyManager.CALL_STATE_RINGING -> {
-                    Log.d("ttt", "통화중")
                 }
             }
-
-            Log.d("ttt", "phone state : $state");
-            Log.d("ttt", "phone currentPhoneNumber : $incomingNumber")
         }
     }
 
     // 버튼
-    @RequiresApi(Build.VERSION_CODES.M)
     fun onClickCallButton(view: View){
 
         if (autoCallTureNumListSize < autoCallTotalNumListSize){
@@ -203,6 +250,7 @@ class MainActivity : AppCompatActivity() {
 
             // 전화 연결
             val permissionListener = object : PermissionListener {
+                @RequiresApi(Build.VERSION_CODES.R)
                 override fun onPermissionGranted() {
 
                     if (!Settings.canDrawOverlays(this@MainActivity)) {
@@ -216,6 +264,7 @@ class MainActivity : AppCompatActivity() {
 
                     }
                 }
+
                 override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
                     Toast.makeText(this@MainActivity,"전화 연결 권한이 거부되었습니다.", Toast.LENGTH_SHORT).show()
                 }
@@ -234,10 +283,41 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    fun onClickAllDeleteButton(view: View){
-        lifecycleScope.launch(Dispatchers.IO) {
-            viewModel.deleteAll()
+    fun onClickAllDeleteDialogButton(view: View){
+
+        // 다이어로그 생성
+        val mHandler = Handler(Looper.getMainLooper())
+        mHandler.post {
+            val ad = AlertDialog.Builder(this@MainActivity)
+            ad.setIcon(R.drawable.auto_call)
+            ad.setTitle("전체 삭제")
+            ad.setMessage("정말 전화번호를 전체 삭제하시겠습니까?\n전화번호 전체 삭제시 이전에 통화 했던 정보들이 사라집니다.")
+
+            // 확인버튼
+            ad.setPositiveButton("확인") { dialog, _ -> AllDelete() }
+            // 취소버튼
+            ad.setNegativeButton("취소") { dialog, which -> dialog.dismiss() }
+
+            ad.show()
         }
+    }
+
+
+    private fun AllDelete(){
+        var allDeleteMessage: String = ""
+
+        if (autoCallTotalNumListSize != 0){
+            lifecycleScope.launch(Dispatchers.IO) {
+                viewModel.deleteAll()
+            }
+            allDeleteMessage = "모든 전화번호를 삭제했습니다."
+
+        }else{
+            allDeleteMessage = "삭제할 전화번호가 없습니다."
+
+        }
+        Toast.makeText(this, allDeleteMessage, Toast.LENGTH_SHORT).show()
+
 
     }
 
@@ -254,6 +334,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // M 버전(안드로이드 6.0 마시멜로우 버전) 보다 같거나 큰 API에서만 설정창 이동 가능
+    @RequiresApi(Build.VERSION_CODES.R)
     private fun getPermission() {
         // 지금 창이 오버레이 설정창이 아니라면
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
@@ -261,6 +342,17 @@ class MainActivity : AppCompatActivity() {
                 "package:$packageName"))
             startActivityForResult(intent, 1)
         }
+    }
+
+    private fun getStoragePermission(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+            val intent = Intent()
+            intent.action = Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
+            val uri = Uri.fromParts("package", this.packageName, null)
+            intent.data = uri
+            startActivity(intent)
+        }
+
     }
 
     // Service 체크

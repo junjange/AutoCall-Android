@@ -15,59 +15,87 @@
     android:layout_height="match_parent"
     tools:context=".ui.MainActivity">
 
-    <Button
-        android:id="@+id/FileImportButton"
-        android:onClick="@{mainActivity::onClickFileImportButton}"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/fileImport"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/mainToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:titleTextColor="@color/black">
 
-    <Button
-        android:id="@+id/CallButton"
-        android:onClick="@{mainActivity::onClickCallButton}"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/call"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+            <TextView
+                android:layout_margin="15dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textColor="@color/black"
+                android:layout_gravity="center"
+                android:textSize="24dp"
+                android:textStyle="bold"/>
 
-    <Button
-        android:id="@+id/AllDeleteButton"
-        android:onClick="@{mainActivity::onClickAllDeleteButton}"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/AllDelete"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.appcompat.widget.Toolbar>
+
+
+
+
 
     <TextView
         android:id="@+id/callCheck"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="">
+        android:textSize="18sp"
+        android:text=""
+        android:layout_margin="15dp"/>
 
-    </TextView>
+
 
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginBottom="18dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="10dp"
         android:padding="10dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/btnAdd"
-        app:layout_constraintStart_toEndOf="@+id/btnAdd"
-        app:layout_constraintTop_toBottomOf="@+id/add_button"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScroolingViewBehavior"
         tools:listitem="@layout/item_recycler_call" />
+
+
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/FileImportButton"
+            android:onClick="@{mainActivity::onClickFileImportButton}"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:text="@string/fileImport" />
+
+        <Button
+            android:id="@+id/CallButton"
+            android:onClick="@{mainActivity::onClickCallButton}"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+
+            android:text="@string/call" />
+
+        <Button
+            android:id="@+id/AllDeleteButton"
+            android:onClick="@{mainActivity::onClickAllDeleteDialogButton}"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+
+            android:text="@string/AllDelete"/>
+
+    </LinearLayout>
+
+
+
 
 
 

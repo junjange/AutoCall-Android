@@ -15,6 +15,34 @@
     android:layout_height="match_parent"
     tools:context=".ui.FileImportActivity"
     android:orientation="vertical">
+<!--    <TextView-->
+<!--        android:layout_margin="15dp"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="내 파일"-->
+<!--        android:textColor="@color/black"-->
+<!--        android:textSize="24dp"-->
+<!--        android:textStyle="bold"/>-->
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="내 파일"
+            app:titleTextColor="@color/black">
+        </androidx.appcompat.widget.Toolbar>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/breadcrumbRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        </androidx.recyclerview.widget.RecyclerView>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+
 
     <FrameLayout
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScroolingViewBehavior"
