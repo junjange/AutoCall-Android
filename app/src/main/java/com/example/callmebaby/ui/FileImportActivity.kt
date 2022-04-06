@@ -2,13 +2,12 @@ package com.example.callmebaby.ui
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -22,9 +21,7 @@ import com.example.callmebaby.databinding.ActivityFileImportBinding
 import com.example.callmebaby.fileList.FilesListFragment
 import kotlinx.android.synthetic.main.activity_file_import.*
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.*
 
 
@@ -92,9 +89,11 @@ class FileImportActivity : AppCompatActivity(), FilesListFragment.OnItemClickLis
     }
 
     private fun Context.launchFileIntent(fileModel: FileModel) {
+        val dialog = LoadingDialog(this@FileImportActivity)
 
         // 확장자가 csv, txt 만 실행되게 설정
         if(fileModel.extension == "csv" || fileModel.extension == "txt"){
+            dialog.show()
             lifecycleScope.launch(Dispatchers.IO) {
                 viewModel.deleteAll()
             }
@@ -103,17 +102,19 @@ class FileImportActivity : AppCompatActivity(), FilesListFragment.OnItemClickLis
 
             try {
                 val buf = BufferedReader(FileReader(fileModel.path))
+                lifecycleScope.launch(Dispatchers.IO){
 
-                lifecycleScope.launch(Dispatchers.IO) {
-                    lifecycleScope.async {
-                        while((buf.readLine().also { line = it })!=null){
-                            if (fileModel.extension == "csv") {
-                                val lineSize = line!!.split(',')
-                                if (lineSize.size > 1) {
-                                    line = lineSize[1]
-                                }
+                    while ((buf.readLine().also { line = it }) != null) withContext(
+                        Dispatchers.Default) {
+                        if (fileModel.extension == "csv") {
+                            val lineSize = line!!.split(',')
+                            if (lineSize.size > 1) {
+                                line = lineSize[1]
                             }
+                        }
 
+                        withContext(Dispatchers.Default) {
+                            Log.d("ttt", idx.toString())
                             viewModel.insert(
                                 CallEntity(
                                     idx,
@@ -122,22 +123,30 @@ class FileImportActivity : AppCompatActivity(), FilesListFragment.OnItemClickLis
                             )
                             idx++
                         }
-                    }.await()
+
+                    }
+
+                    dialog.dismiss()
+
+                    val intent = Intent(this@FileImportActivity, MainActivity::class.java)
+                    finishAffinity()
+                    startActivity(intent)
                 }
 
-                val intent = Intent(this@FileImportActivity, MainActivity::class.java)
-                finishAffinity()
-                startActivity(intent)
 
-            }catch (e: Exception){
+            } catch (e: Exception) {
                 Log.d("ttt", e.toString())
 
             }
+
+
 
         }else{
             Toast.makeText(this@FileImportActivity, "파일의 확장자가 .txt 또는 .csv가 아닙니다.",Toast.LENGTH_SHORT).show()
         }
     }
+
+
     override fun onLongClick(fileModel: FileModel) {}
 
 

@@ -36,17 +36,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.android.synthetic.main.fragment_file_list.*
-import android.R.string.no
 import android.os.*
 import android.os.Environment
-
-import android.R.string.no
-
-
 
 
 
 class MainActivity : AppCompatActivity() {
+    var message: String = ""
 
     var isService = false
     var autoCallTotalNumListSize = 0 // 총 전화번호 개수
@@ -120,7 +116,14 @@ class MainActivity : AppCompatActivity() {
                 binding.callCheck.text =
                     "전체 ${autoCallTotalNumListSize}개 중 ${autoCallTureNumListSize}번 째 통화 완료"
 
+                if(autoCallTotalNumListSize == 0){
+                    binding.emptyView.visibility = View.VISIBLE
+                    binding.recyclerview.visibility = View.GONE
+                }else{
+                    binding.emptyView.visibility = View.GONE
+                    binding.recyclerview.visibility = View.VISIBLE
 
+                }
             })
 
             viewModel.getTureAll().observe(this@MainActivity,{ falseNum ->
@@ -277,7 +280,14 @@ class MainActivity : AppCompatActivity() {
                 .check()
 
         }else{
-            Toast.makeText(this@MainActivity,"리스트에 있는 번호를 모두 통화 연결 했습니다.", Toast.LENGTH_SHORT).show()
+            if (autoCallTotalNumListSize == 0){
+                message = "리스트에 전화번호가 없습니다."
+
+            }else{
+                message = "리스트에 있는 전화번호를 모두 통화했습니다."
+
+            }
+            Toast.makeText(this@MainActivity,message, Toast.LENGTH_SHORT).show()
 
         }
 
@@ -294,7 +304,7 @@ class MainActivity : AppCompatActivity() {
             ad.setMessage("정말 전화번호를 전체 삭제하시겠습니까?\n전화번호 전체 삭제시 이전에 통화 했던 정보들이 사라집니다.")
 
             // 확인버튼
-            ad.setPositiveButton("확인") { dialog, _ -> AllDelete() }
+            ad.setPositiveButton("확인") { dialog, _ -> allDelete() }
             // 취소버튼
             ad.setNegativeButton("취소") { dialog, which -> dialog.dismiss() }
 
@@ -303,20 +313,19 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun AllDelete(){
-        var allDeleteMessage: String = ""
+    private fun allDelete(){
 
         if (autoCallTotalNumListSize != 0){
             lifecycleScope.launch(Dispatchers.IO) {
                 viewModel.deleteAll()
             }
-            allDeleteMessage = "모든 전화번호를 삭제했습니다."
+            message = "모든 전화번호를 삭제했습니다."
 
         }else{
-            allDeleteMessage = "삭제할 전화번호가 없습니다."
+            message = "삭제할 전화번호가 없습니다."
 
         }
-        Toast.makeText(this, allDeleteMessage, Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 
 
     }
