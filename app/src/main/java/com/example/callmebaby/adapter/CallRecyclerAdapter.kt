@@ -31,6 +31,7 @@ class CallRecyclerAdapter internal constructor(context: MainActivity, var onDele
         val linearLayout : LinearLayout = itemView.linearLayout
         val num: TextView = itemView.text
         val deleteButton: TextView = itemView.delete_button
+        val idx: TextView = itemView.number
 
     }
 
@@ -60,14 +61,17 @@ class CallRecyclerAdapter internal constructor(context: MainActivity, var onDele
         holder.linearLayout.translationX = 0f
 
         val callNumber = call[position]
-
         holder.num.text = callNumber.phoneNumber
+        holder.idx.text = callNumber.id.toString()
 
-        if (call[position].phoneNumberState){
-
+        if (callNumber.phoneNumberState){
 
             holder.num.paintFlags = holder.num.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
             holder.num.setTextColor(Color.GRAY)
+        }else{
+            holder.num.paintFlags = 0
+            holder.num.setTextColor(Color.BLACK)
+
         }
 
         holder.deleteButton.setOnClickListener(View.OnClickListener {

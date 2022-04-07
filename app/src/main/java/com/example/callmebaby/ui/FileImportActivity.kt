@@ -114,7 +114,6 @@ class FileImportActivity : AppCompatActivity(), FilesListFragment.OnItemClickLis
                         }
 
                         withContext(Dispatchers.Default) {
-                            Log.d("ttt", idx.toString())
                             viewModel.insert(
                                 CallEntity(
                                     idx,

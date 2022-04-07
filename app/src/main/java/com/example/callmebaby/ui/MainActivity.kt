@@ -6,6 +6,7 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.*
 import android.provider.Settings
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
@@ -27,23 +28,19 @@ import com.example.callmebaby.R
 import com.example.callmebaby.adapter.CallRecyclerAdapter
 import com.example.callmebaby.common.SwipeHelperCallback
 import com.example.callmebaby.data.CallEntity
-import com.example.callmebaby.service.MyService
 import com.example.callmebaby.databinding.ActivityMainBinding
+import com.example.callmebaby.service.MyService
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.TedPermission
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.fragment_file_list.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.android.synthetic.main.fragment_file_list.*
-import android.os.*
-import android.os.Environment
-
 
 
 class MainActivity : AppCompatActivity() {
     var message: String = ""
-
     var isService = false
     var autoCallTotalNumListSize = 0 // 총 전화번호 개수
     var autoCallTureNumListSize = 0 // 전화한 전화번호 개수, 통화중인 전화 인덱스
@@ -337,7 +334,6 @@ class MainActivity : AppCompatActivity() {
             val myUri = Uri.parse("tel:${num}")
             val intent = Intent(Intent.ACTION_CALL, myUri)
             startActivity(intent)
-
         }
 
     }
