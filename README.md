@@ -1,6 +1,6 @@
 # AutoCall☎️
 아웃소싱을 위해 개발한 프로젝트
-## :camera: Screenshot
+## 📖 Details of the app screens
 - **메인 페이지**
 
 <img width="30%" src="https://blog.kakaocdn.net/dn/AyHIF/btryRRwUcPJ/a9kiId8oZCQW1TelVkgQtK/img.jpg"> <img width="30%" src="https://blog.kakaocdn.net/dn/bBlJJI/btryVaVRFeN/YMa5fJDXkDkiaSSs60Slkk/img.jpg">
