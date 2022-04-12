@@ -205,16 +205,11 @@ class MainActivity : AppCompatActivity() {
                     if(isServiceRunningCheck()){
 
                         // 전화할 번호가 있으면 통화
-                        if(autoCallTureNumListSize < autoCallTotalNumListSize){
+                        if(autoCallTureNumListSize < autoCallTotalNumListSize ){
 
-                            phoneBook[autoCallTureNumListSize].phoneNumberState = true
-                            viewModel.update(phoneBook[autoCallTureNumListSize])
-                            callMe(phoneBook[autoCallTureNumListSize].phoneNumber)
-
-                            recyclerview.apply {
-                                layoutManager = LinearLayoutManager(applicationContext)
-
-                            }
+                                phoneBook[autoCallTureNumListSize].phoneNumberState = true
+                                viewModel.update(phoneBook[autoCallTureNumListSize])
+                                callMe(phoneBook[autoCallTureNumListSize].phoneNumber)
 
                             isService = true
 
@@ -242,11 +237,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // 버튼
     fun onClickCallButton(view: View){
+
+        if(!isServiceRunningCheck()){
+            callMission()
+        }
+    }
+
+    // 버튼
+    private fun callMission(){
 
         if (autoCallTureNumListSize < autoCallTotalNumListSize){
             val mTelephonyManager = this.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+
 
             // 전화 연결
             val permissionListener = object : PermissionListener {
@@ -301,9 +304,9 @@ class MainActivity : AppCompatActivity() {
             ad.setMessage("정말 전화번호를 전체 삭제하시겠습니까?\n전화번호 전체 삭제시 이전에 통화 했던 정보들이 사라집니다.")
 
             // 확인버튼
-            ad.setPositiveButton("확인") { dialog, _ -> allDelete() }
+            ad.setPositiveButton("확인") { _, _ -> allDelete() }
             // 취소버튼
-            ad.setNegativeButton("취소") { dialog, which -> dialog.dismiss() }
+            ad.setNegativeButton("취소") { dialog, _ -> dialog.dismiss() }
 
             ad.show()
         }
@@ -362,12 +365,16 @@ class MainActivity : AppCompatActivity() {
 
     // Service 체크
     fun isServiceRunningCheck(): Boolean {
+        val mTelephonyManager = this.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+
         val manager = this.getSystemService(ACTIVITY_SERVICE) as ActivityManager
         for (service in manager.getRunningServices(Int.MAX_VALUE)) {
             if ("com.example.callmebaby.service.MyService" == service.service.className) {
                 return true
             }
         }
+        mTelephonyManager.listen(phoneListener, PhoneStateListener.LISTEN_NONE)
+
         return false
     }
 
